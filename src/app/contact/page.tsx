@@ -14,6 +14,9 @@ export default function ContactPage() {
         we reply within two business days.
       </p>
       <div className="flex flex-col gap-6">
+        <span className="display w-fit text-[clamp(28px,5vw,64px)]">
+          {SITE.contact.name}
+        </span>
         <a
           href={`mailto:${SITE.contact.email}`}
           className="display w-fit text-[clamp(28px,5vw,64px)] transition-opacity hover:opacity-60"

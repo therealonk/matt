@@ -9,24 +9,21 @@ export const metadata: Metadata = {
 const SERVICES = [
   {
     name: "Photography",
-    blurb:
-      "Editorial, portrait, product and location shoots — planned, shot and delivered as finished, retouched sets.",
+    blurb: "TODO",
   },
   {
     name: "Marketing",
-    blurb:
-      "Campaign imagery, social content programs and brand asset libraries built to run across channels.",
+    blurb: "TODO",
   },
   {
-    name: "Direction",
-    blurb:
-      "Art direction and visual identity for launches — moodboards to final selects, one accountable partner.",
+    name: "Video Production",
+    blurb: "TODO",
   },
 ];
 
 // Placeholder brand names for the "Trusted by" strip — replace with real
 // client wordmarks (SVG logos drop into the same row).
-const TRUSTED_BY = ["Northline", "Atelier V", "Field & Co", "Meridian", "Oslo Works"];
+const TRUSTED_BY = ["Porsche", "Mavis", "Michelin", "BMW", "Pep Boys"];
 
 export default function ServicesPage() {
   return (

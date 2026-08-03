@@ -8,15 +8,17 @@ export type NavLink = { label: string; href: string };
 
 export const SITE = {
   /** Display name — used in the landing headline, wordmark and <title>. */
-  name: "Aperture",
+  name: "MK8 Media",
   /** Short tagline under the landing eyebrow. */
   tagline: "Photography & Marketing",
   description:
     "A curated editorial photography portfolio and marketing studio.",
   contact: {
-    email: "hello@example.com",
-    phone: "+1 (000) 000-0000",
-    location: "Los Angeles, CA",
+    /** Person to reach — shown above the contact details. */
+    name: "Matt",
+    email: "mk8mediateam@gmail.com",
+    phone: "646-123-4567",
+    location: "New York, NY",
   },
   /** Order defines the fullscreen menu (numbered 01, 02, …). */
   nav: [
