@@ -406,12 +406,11 @@ export default function Aperture({ className }: { className?: string }) {
 
       <EdgeBlur ref={bandsRef} />
 
-      <div
-        ref={hintRef}
-        className="eyebrow absolute right-[clamp(16px,3vw,32px)] top-[clamp(52px,9vh,84px)] z-40"
-        style={{ opacity: reduced ? 1 : 0 }}
-      >
-        Scroll · Click to open
+      {/* hint sits top-centre, clear of the corner chrome */}
+      <div className="pointer-events-none absolute inset-x-0 top-[clamp(16px,3vh,28px)] z-40 flex justify-center">
+        <div ref={hintRef} className="eyebrow" style={{ opacity: reduced ? 1 : 0 }}>
+          Scroll · Click to open
+        </div>
       </div>
 
       {open && (

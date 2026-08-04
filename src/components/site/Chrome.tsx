@@ -28,7 +28,8 @@ export default function Chrome() {
     <>
       <Link
         href="/"
-        className="display fixed left-[clamp(16px,3vw,32px)] top-[clamp(16px,3vh,28px)] z-40 text-[15px] tracking-[0.08em] transition-opacity hover:opacity-60"
+        className="eyebrow fixed left-[clamp(16px,3vw,32px)] top-[clamp(16px,3vh,28px)] z-40 !text-[12px] tracking-[0.08em] transition-opacity hover:opacity-60"
+        style={{ color: "var(--foreground)" }}
         title="Back to the landing page"
       >
         {SITE.name}
