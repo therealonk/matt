@@ -43,8 +43,11 @@ export const BALLOON_DOWN = 0.12; // scroll-up: wall scales DOWN slightly
 export const DEG = 180 / Math.PI;
 
 // §4.5 — progressive edge blur
-export const EDGE_BLUR_LAYERS = 8;
-export const EDGE_BLUR_MAX = 10; // px at the very edge
+// Perf-tuned from the spec's 8 layers / 10px: each slab is a backdrop
+// re-blur of the moving wall every frame, and cost scales linearly with
+// the layer count. 4 slabs keeps the graded melt at half the price.
+export const EDGE_BLUR_LAYERS = 4;
+export const EDGE_BLUR_MAX = 9; // px at the very edge
 export const EDGE_BLUR_GROWTH = 0.3; // bands grow up to +30%
 export const EDGE_BLUR_VEL_REF = 150; // px/frame at which growth maxes
 export const EDGE_BLUR_EASE = 0.08;
