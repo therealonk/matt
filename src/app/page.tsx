@@ -7,7 +7,7 @@
 
 import Link from "next/link";
 import { SITE } from "@/content/site";
-import { SHOOTS, coverUrl } from "@/content/shoots";
+import { SHOOTS, wallUrl } from "@/content/shoots";
 import { DESKTOP_SLOTS, IMG_GRADE } from "@/components/aperture/tunables";
 
 // the upper slots of the wall composition — enough to fill the first viewport
@@ -28,7 +28,7 @@ export default function LandingPage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={slotIdx}
-              src={coverUrl(shoot)}
+              src={wallUrl(shoot)}
               alt=""
               draggable={false}
               className="absolute rounded-[4px] object-cover"

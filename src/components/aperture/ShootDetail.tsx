@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
-import { photoUrl, type Shoot } from "@/content/shoots";
+import { photoUrl, wallUrl, type Shoot } from "@/content/shoots";
 import { SITE } from "@/content/site";
 import { IMG_GRADE, MOBILE_BREAKPOINT } from "./tunables";
 
@@ -95,6 +95,23 @@ export default function ShootDetail({
 
   const coverAspect = origin.width / origin.height;
   const aspectOf = (i: number) => aspects.current[i] ?? coverAspect;
+
+  // Quality model: the zoom opens on the wall derivative (already cached,
+  // so the flight is never blank), then silently upgrades to the untouched
+  // original once it has loaded. The detail view always ends on originals.
+  const coverWall = wallUrl(shoot);
+  const coverOrig = photoUrl(shoot, shoot.photos[0]);
+  useEffect(() => {
+    if (coverWall === coverOrig) return;
+    const upgrade = new Image();
+    upgrade.onload = () => {
+      const img = imgRef.current;
+      if (!img || closingRef.current) return;
+      if (idxRef.current === 0 && img.src.endsWith(coverWall))
+        img.src = coverOrig;
+    };
+    upgrade.src = coverOrig;
+  }, [coverWall, coverOrig]);
 
   const placeNav = useCallback((rect: OriginRect, animate: boolean) => {
     const nav = navRef.current;
@@ -236,16 +253,19 @@ export default function ShootDetail({
       return;
     }
     gsap.killTweensOf([box, img, nav]);
-    const coverSrc = photoUrl(shoot, shoot.photos[0]);
+    // both resolutions of the cover count as "already showing the cover";
+    // the crossfade target is the wall derivative — guaranteed cached, and
+    // pixel-identical to the frame the shrink lands on
+    const coverSrcs = [coverWall, coverOrig];
     if (reduced) {
       onClosed();
       return;
     }
     const tl = gsap.timeline({ onComplete: onClosed });
-    if (img.src !== coverSrc && !img.src.endsWith(coverSrc)) {
+    if (!coverSrcs.some((s) => img.src.endsWith(s))) {
       // cross-fade back to the cover so the shrink lands exactly
       tl.to(img, { opacity: 0, duration: 0.14 }, 0).add(() => {
-        img.src = coverSrc;
+        img.src = coverWall;
         gsap.set(img, { opacity: 1 });
       }, 0.14);
     }
@@ -256,7 +276,7 @@ export default function ShootDetail({
         { ...origin, borderRadius: 4, duration: 0.5, ease: "power3.inOut" },
         0.08
       );
-  }, [onClosed, origin, reduced, shoot]);
+  }, [onClosed, origin, reduced, coverWall, coverOrig]);
 
   // ---- keys + resize re-fit ----
   useEffect(() => {
@@ -372,7 +392,7 @@ export default function ShootDetail({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           ref={imgRef}
-          src={photoUrl(shoot, shoot.photos[0])}
+          src={coverWall}
           alt={shoot.title}
           className="h-full w-full object-cover"
           style={{ filter: IMG_GRADE }}

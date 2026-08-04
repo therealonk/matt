@@ -10,7 +10,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { SHOOTS, coverUrl } from "@/content/shoots";
+import { SHOOTS, wallUrl } from "@/content/shoots";
 import { buildSlots, isMobile, type WallLayout } from "./layout";
 import EdgeBlur from "./EdgeBlur";
 import ShootDetail, { type OriginRect } from "./ShootDetail";
@@ -410,7 +410,7 @@ export default function Aperture({ className }: { className?: string }) {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={coverUrl(shoot)}
+                  src={wallUrl(shoot)}
                   alt={shoot.title}
                   className="h-full w-full object-cover"
                   style={{ filter: IMG_GRADE }}

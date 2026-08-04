@@ -42,13 +42,31 @@ The easy way — point the script at a folder of images:
 npm run add-shoot -- /path/to/folder-of-images
 npm run add-shoot -- --list          # show registered shoots
 npm run add-shoot -- --remove <id>   # delete a shoot (files + entry)
+npm run add-shoot -- --audit         # re-check every shoot's photos
+npm run add-shoot -- --rederive      # (re)generate wall derivatives
 ```
 
 It asks for the title, category, description, location, year, which photo
 is the cover (the wall thumbnail) and optional camera data, then copies
 the images into `public/shoots/<id>/` and registers the shoot in
-`src/content/shoots.json`. It warns about files over 4 MB. Answers can
-also be piped in for scripted use.
+`src/content/shoots.json`. Answers can also be piped in for scripted use.
+
+**Quality model.** Originals are never modified — they're copied as-is
+and are always what the per-shoot detail view shows (the zoom opens on
+the cached wall image and silently upgrades to the original once loaded).
+For the gallery wall, the script derives `<name>.wall.jpg` from the cover:
+same aspect (never cropped), EXIF-oriented, high-quality downscale to
+1200px wide — as detailed as any wall frame can display, and no more.
+Covers already ≤1200px are served directly with no derivative. Existing
+shoots can be upgraded any time with `--rederive`.
+
+**Ingest warnings** (informative, never blocking): skipped non-web-safe
+files by name (HEIC/TIFF/RAW/PSD…); decode cost of big photos
+(megapixels → browser RAM); photos too small to stay sharp in the detail
+view or on the wall; landscape covers (wall frames are portrait — the
+warning includes the visible-width %); extreme panoramas (render small in
+the height-fit detail pane); total shoot payload over 25 MB. Thresholds
+live at the top of `scripts/add-shoot.mjs`.
 
 By hand:
 
@@ -65,12 +83,10 @@ Notes on the loose-file approach:
 - Covers are displayed `object-cover` inside portrait wall frames, so an
   extremely wide cover will crop hard on the wall (fine in the detail view,
   which re-fits per photo). Prefer portrait-ish covers.
-- Files are served as-is from `public/` — no build-time resizing. For a
-  production hand-off, export web-sized files (~1600 px long edge). If
-  automatic optimization is ever wanted, the `<img>` tags in
-  `Aperture.tsx` / `ShootDetail.tsx` / `app/page.tsx` are the three places
-  to swap in `next/image` (that *would* reintroduce sizing metadata
-  requirements, which is why it's not done here).
+- Detail-view photos are served as-is from `public/` — that's the
+  quality guarantee. For visitors' sake, exporting shoot photos at
+  ~2400 px long edge is visually identical to camera-native files on any
+  realistic screen (the ingest warnings say so when it matters).
 - The bundled images are generated gradient placeholders with the file
   name baked in (so shoot navigation is visibly working) — replace them
   folder-by-folder.
