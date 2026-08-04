@@ -28,7 +28,7 @@ pages are real routes.
 | You want to… | Edit |
 |---|---|
 | Studio name, contact info, nav links | `src/content/site.ts` |
-| Shoots, photos, camera data | `src/content/shoots.ts` + `public/shoots/` |
+| Shoots, photos, camera data | `npm run add-shoot`, or `src/content/shoots.json` + `public/shoots/` |
 | Any motion/layout constant (spec-pinned) | `src/components/aperture/tunables.ts` |
 | Wall slot composition | `DESKTOP_SLOTS` in `tunables.ts` |
 | Theme colors (light/dark) | tokens at the top of `src/app/globals.css` |
@@ -36,9 +36,26 @@ pages are real routes.
 
 ## Adding / swapping photos
 
+The easy way — point the script at a folder of images:
+
+```bash
+npm run add-shoot -- /path/to/folder-of-images
+npm run add-shoot -- --list          # show registered shoots
+npm run add-shoot -- --remove <id>   # delete a shoot (files + entry)
+```
+
+It asks for the title, category, description, location, year, which photo
+is the cover (the wall thumbnail) and optional camera data, then copies
+the images into `public/shoots/<id>/` and registers the shoot in
+`src/content/shoots.json`. It warns about files over 4 MB. Answers can
+also be piped in for scripted use.
+
+By hand:
+
 1. Drop a folder of images into `public/shoots/<shoot-id>/`.
-2. Add an entry to `SHOOTS` in `src/content/shoots.ts` listing the files in
+2. Add an entry to `src/content/shoots.json` listing the files in
    display order. **The first photo is the cover** shown on the wall.
+   (Types and URL helpers live in `src/content/shoots.ts`.)
 
 File names, extensions and dimensions are unrestricted — anything the
 browser renders (`.jpg`, `.png`, `.webp`, `.avif`, `.svg`, spaces in names)
