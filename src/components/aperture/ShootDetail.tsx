@@ -100,14 +100,26 @@ export default function ShootDetail({
     const nav = navRef.current;
     if (!nav) return;
     const vw = window.innerWidth;
-    const centre =
-      vw < MOBILE_BREAKPOINT ? vw / 2 : 0.42 * vw + (0.58 * vw) / 2;
-    const style = {
-      left: centre - nav.offsetWidth / 2,
-      top: rect.top + rect.height + 16,
-    };
-    if (animate) gsap.to(nav, { ...style, duration: 0.42, ease: "power3.inOut" });
-    else gsap.set(nav, style);
+    const vh = window.innerHeight;
+    if (vw < MOBILE_BREAKPOINT) {
+      // mobile: the nav tracks the print band, between print and copy
+      const style = {
+        left: vw / 2 - nav.offsetWidth / 2,
+        top: rect.top + rect.height + 16,
+      };
+      if (animate)
+        gsap.to(nav, { ...style, duration: 0.42, ease: "power3.inOut" });
+      else gsap.set(nav, style);
+      return;
+    }
+    // Desktop: a fixed seat centred in the print's bottom margin band.
+    // The print's bottom edge never reaches past vh − padY (§6 fitting),
+    // so this never collides — and the controls never move between photos.
+    const padY = Math.min(96, 0.11 * vh);
+    gsap.set(nav, {
+      left: 0.42 * vw + (0.58 * vw) / 2 - nav.offsetWidth / 2,
+      top: vh - padY / 2 - nav.offsetHeight / 2,
+    });
   }, []);
 
   // ---- open (§6): grow from the exact origin rect ----
