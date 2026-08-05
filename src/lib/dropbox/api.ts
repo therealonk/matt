@@ -38,11 +38,23 @@ export class DropboxError extends Error {
   }
 }
 
+/*
+ * Read a credential defensively. Pasting into a dashboard or an .env file
+ * very easily carries a trailing newline, a stray space, or the quotes the
+ * value was copied inside — none of which are visible, and any of which
+ * make Dropbox reject the whole pair with "invalid_client".
+ */
+function credential(name: string): string {
+  const raw = process.env[name];
+  if (!raw) return "";
+  return raw.trim().replace(/^['"]|['"]$/g, "");
+}
+
 export function dropboxConfigured(): boolean {
   return Boolean(
-    process.env.DROPBOX_APP_KEY &&
-      process.env.DROPBOX_APP_SECRET &&
-      process.env.DROPBOX_REFRESH_TOKEN
+    credential("DROPBOX_APP_KEY") &&
+      credential("DROPBOX_APP_SECRET") &&
+      credential("DROPBOX_REFRESH_TOKEN")
   );
 }
 
@@ -50,9 +62,9 @@ let cachedToken: { value: string; expiresAt: number } | null = null;
 let inFlight: Promise<string> | null = null;
 
 async function fetchAccessToken(): Promise<string> {
-  const key = process.env.DROPBOX_APP_KEY;
-  const secret = process.env.DROPBOX_APP_SECRET;
-  const refresh = process.env.DROPBOX_REFRESH_TOKEN;
+  const key = credential("DROPBOX_APP_KEY");
+  const secret = credential("DROPBOX_APP_SECRET");
+  const refresh = credential("DROPBOX_REFRESH_TOKEN");
   if (!key || !secret || !refresh)
     throw new DropboxError("Dropbox credentials are not configured", 0);
 
@@ -70,10 +82,19 @@ async function fetchAccessToken(): Promise<string> {
 
   const text = await res.text();
   if (!res.ok) {
-    // 400 here almost always means the refresh token was revoked or the
-    // key/secret don't match it — worth saying plainly in the logs.
+    /*
+     * Dropbox distinguishes these two, and they point at different
+     * variables — saying which saves a lot of guessing in a log.
+     *   invalid_client → the key/secret pair failed; the token wasn't read
+     *   invalid_grant  → the pair was fine, the refresh token is bad
+     */
+    const kind = text.includes("invalid_client")
+      ? "DROPBOX_APP_KEY / DROPBOX_APP_SECRET are not a valid pair (the refresh token was not even checked). Re-copy both from the app's Settings tab — a trailing space or newline is the usual cause."
+      : text.includes("invalid_grant")
+        ? "DROPBOX_REFRESH_TOKEN was rejected — it may have been revoked, or it belongs to a different app. Run `npm run dropbox:auth` to issue a new one."
+        : "Check DROPBOX_APP_KEY / DROPBOX_APP_SECRET / DROPBOX_REFRESH_TOKEN.";
     throw new DropboxError(
-      `Could not refresh the Dropbox access token (${res.status}). Check DROPBOX_APP_KEY / DROPBOX_APP_SECRET / DROPBOX_REFRESH_TOKEN.`,
+      `Could not refresh the Dropbox access token (${res.status}). ${kind}`,
       res.status,
       text
     );

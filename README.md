@@ -100,6 +100,23 @@ a straight-from-camera JPEG looks like — the site resizes it instead.
 If Dropbox is unreachable, the last good catalogue keeps serving rather
 than the gallery going blank.
 
+### Troubleshooting the connection
+
+```bash
+npm run dropbox:check
+```
+
+Inspects the three credentials for the invisible paste damage that causes
+most failures (stray whitespace, wrapping quotes, an access token pasted
+where the refresh token goes), then does a real token refresh and lists the
+shoots folder. It never prints a secret — only each value's length and
+first three characters.
+
+It also names the right variable when Dropbox refuses:
+`invalid_client` means the **app key/secret pair** failed and the refresh
+token was never read; `invalid_grant` means the pair was fine and the
+**refresh token** is bad. The site's own logs make the same distinction.
+
 ### Checking what's in there
 
 ```bash

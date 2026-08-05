@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "shoots:audit": "node scripts/audit.mjs",
-    "dropbox:auth": "node scripts/dropbox-auth.mjs"
+    "dropbox:auth": "node scripts/dropbox-auth.mjs",
+    "dropbox:check": "node scripts/dropbox-check.mjs"
   },
   "dependencies": {
     "exifr": "^7.1.3",
