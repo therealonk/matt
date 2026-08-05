@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PageShell from "@/components/site/PageShell";
+import ContactForm from "@/components/site/ContactForm";
 import { SITE } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -13,6 +14,8 @@ export default function ContactPage() {
         For bookings, campaign work or a portfolio walkthrough, reach out —
         we reply within two business days.
       </p>
+
+      {/* direct details first: some visitors only want the address */}
       <div className="flex flex-col gap-6">
         <span className="display w-fit text-[clamp(28px,5vw,64px)]">
           {SITE.contact.name}
@@ -31,6 +34,16 @@ export default function ContactPage() {
         </a>
         <span style={{ color: "var(--dim)" }}>{SITE.contact.location}</span>
       </div>
+
+      <div
+        className="mt-2 h-px w-full"
+        style={{ background: "var(--hairline)" }}
+      />
+
+      <section className="flex flex-col gap-6">
+        <div className="eyebrow mono-tight">Send an inquiry</div>
+        <ContactForm />
+      </section>
     </PageShell>
   );
 }

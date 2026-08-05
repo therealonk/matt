@@ -20,6 +20,17 @@ export const SITE = {
     phone: "646-123-4567",
     location: "New York, NY",
   },
+  /**
+   * Contact-form inquiry types. Add or rename freely — the form, the
+   * validator and the notification email all read this list. The LAST
+   * entry is the fallback submitted when a visitor never picks one.
+   */
+  inquiryTypes: [
+    { value: "photography", label: "Photography" },
+    { value: "marketing", label: "Marketing" },
+    { value: "video", label: "Video Production" },
+    { value: "other", label: "Other" },
+  ],
   /** Order defines the fullscreen menu (numbered 01, 02, …). */
   nav: [
     { label: "Work", href: "/work" },

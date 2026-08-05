@@ -27,7 +27,7 @@ pages are real routes.
 
 | You want to… | Edit |
 |---|---|
-| Studio name, contact info, nav links | `src/content/site.ts` |
+| Studio name, contact info, nav links, inquiry types | `src/content/site.ts` |
 | Shoots, photos, camera data | `npm run add-shoot`, or `src/content/shoots.json` + `public/shoots/` |
 | Any motion/layout constant (spec-pinned) | `src/components/aperture/tunables.ts` |
 | Wall slot composition | `DESKTOP_SLOTS` in `tunables.ts` |
@@ -91,11 +91,64 @@ Notes on the loose-file approach:
   name baked in (so shoot navigation is visibly working) — replace them
   folder-by-folder.
 
+## Contact form
+
+`/contact` shows the direct details, then an inquiry form: name and email
+required, phone optional, inquiry type, and a required comment. Submissions
+POST to `/api/contact`, which emails the studio and sends the visitor a
+confirmation. Nothing is stored — the inbox is the record.
+
+**Setup.** Copy `.env.example` to `.env.local` and add a
+[Resend](https://resend.com) API key (their free tier covers a studio's
+volume many times over):
+
+```bash
+RESEND_API_KEY=re_...
+CONTACT_TO=mk8mediateam@gmail.com          # defaults to SITE.contact.email
+CONTACT_FROM="MK8 Media <hello@yourdomain>" # must be a verified sender
+```
+
+Without a key, `npm run dev` **dry-runs**: submissions are logged to the
+server console and the form reports success, so the whole flow is testable
+with no mail account. A production build without a key returns a clear
+"not connected — email us directly" message rather than pretending to
+send. `CONTACT_DRY_RUN=true` forces log-only mode anywhere (handy for a
+demo).
+
+**Inquiry types** come from `SITE.inquiryTypes` — add, rename or reorder
+them there and the form, the validator and the notification email all
+follow. The **last entry is the fallback**: nothing looks pre-selected,
+but an untouched submit sends that value (currently `other`).
+
+**How submissions are handled**
+
+- **Validated twice** — `src/lib/contact.ts` is imported by both the form
+  and the route, so a hand-crafted POST faces the same rules as the UI.
+- **Bot screening** — an off-screen honeypot plus a fill-timing check.
+  Both answer `200 OK` so bots can't learn they were caught; discards are
+  logged with the reason. The honeypot is deliberately *not* named
+  `company`, which browser autofill would fill, silently killing real
+  inquiries.
+- **Two-tier rate limiting** — 30 requests / 10 min per IP, and separately
+  5 actual sends. Split on purpose: someone mistyping their email five
+  times isn't locked out, only real sends spend the strict budget. State
+  is in-process (see `src/lib/rate-limit.ts` for the scaling note).
+- **Failure is visible** — a failed send keeps the form filled and offers
+  the direct address. A submission is never silently swallowed. The
+  visitor's confirmation is best-effort: if it bounces, their inquiry
+  still counts as sent.
+- **Reply-To is the visitor**, so replying from the inbox reaches them.
+- **PII discipline** — only these five fields, no analytics on the
+  message body, no database, and a short "we only use these details to
+  reply to you" note by the submit button.
+
 ## Architecture
 
 ```
 src/
   content/            site.ts (config) · shoots.ts (catalogue)
+  lib/                contact.ts (shared validation) · contact-emails.ts
+                      · rate-limit.ts
   components/
     aperture/         the gallery, self-contained
       tunables.ts     every magic number from the spec, one file
@@ -106,6 +159,7 @@ src/
       ShootDetail.tsx zoom to editorial split + arrows/dots shoot nav,
                       late image loading + neighbour prefetch
     site/             Chrome (wordmark + fullscreen menu) · PageShell
+                      · ContactForm
   app/                routes; globals.css holds the theme tokens
 ```
 
