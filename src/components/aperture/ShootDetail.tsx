@@ -307,6 +307,11 @@ export default function ShootDetail({
   const photo = shoot.photos[idx];
   const camera = photo.camera ?? shoot.photos[0].camera;
   const nn = String(shootNumber).padStart(2, "0");
+  // join only the parts that exist, so "Paris · 2026", "Paris" and "2026"
+  // all read correctly and an empty pair renders nothing at all
+  const placeAndYear = [shoot.location, shoot.year]
+    .filter(Boolean)
+    .join(" · ");
 
   // Portalled to <body> so the overlay stacks above the corner chrome
   // (the section's isolate stacking context would otherwise cap it).
@@ -329,9 +334,16 @@ export default function ShootDetail({
           <div className="eyebrow mono-tight mb-4">
             {SITE.name} · Nº{nn} / {shootCount}
           </div>
-          <div className="mono-tight mb-2 text-xs" style={{ color: "var(--dim)" }}>
-            {shoot.category}
-          </div>
+          {/*
+            Every field below the title is optional — a shoot with no
+            shoot.txt still reads cleanly, so nothing renders a bare
+            separator or an empty line when a value is missing.
+          */}
+          {shoot.category && (
+            <div className="mono-tight mb-2 text-xs" style={{ color: "var(--dim)" }}>
+              {shoot.category}
+            </div>
+          )}
           <div className="overflow-hidden">
             <h2
               ref={titleRef}
@@ -340,15 +352,23 @@ export default function ShootDetail({
               {shoot.title}
             </h2>
           </div>
-          <div
-            className="mono-tight mb-5 mt-3 text-xs"
-            style={{ color: "var(--dim)" }}
-          >
-            {shoot.location} · {shoot.year}
-          </div>
-          <p className="mono-tight max-w-[36ch] text-[13px] leading-[1.7]">
-            {shoot.description}
-          </p>
+          {placeAndYear && (
+            <div
+              className="mono-tight mb-5 mt-3 text-xs"
+              style={{ color: "var(--dim)" }}
+            >
+              {placeAndYear}
+            </div>
+          )}
+          {shoot.description && (
+            <p
+              className={`mono-tight max-w-[36ch] text-[13px] leading-[1.7] ${
+                placeAndYear ? "" : "mt-4"
+              }`}
+            >
+              {shoot.description}
+            </p>
+          )}
         </div>
         {camera && (
           <div className="mt-8">
@@ -370,7 +390,9 @@ export default function ShootDetail({
                   >
                     {label}
                   </span>
-                  {value}
+                  {/* EXIF is often partial — keep the grid intact rather
+                      than leaving a label hanging over nothing */}
+                  {value || <span style={{ color: "var(--dim)" }}>—</span>}
                 </div>
               ))}
             </div>

@@ -28,68 +28,90 @@ pages are real routes.
 | You want to… | Edit |
 |---|---|
 | Studio name, contact info, nav links, inquiry types | `src/content/site.ts` |
-| Shoots, photos, camera data | `npm run add-shoot`, or `src/content/shoots.json` + `public/shoots/` |
+| Shoots, photos, camera data | the customer's Dropbox — see below |
+| Dropbox folder path, cache window | `src/lib/dropbox/manifest.ts` |
 | Any motion/layout constant (spec-pinned) | `src/components/aperture/tunables.ts` |
 | Wall slot composition | `DESKTOP_SLOTS` in `tunables.ts` |
 | Theme colors (light/dark) | tokens at the top of `src/app/globals.css` |
 | Fonts | `src/app/layout.tsx` (`next/font`) |
 
-## Adding / swapping photos
+## Photos live in Dropbox
 
-The easy way — point the script at a folder of images:
+There is nothing to upload to this repo and no build step for images. The
+customer manages the gallery entirely from their own Dropbox:
 
-```bash
-npm run add-shoot -- /path/to/folder-of-images
-npm run add-shoot -- --list          # show registered shoots
-npm run add-shoot -- --remove <id>   # delete a shoot (files + entry)
-npm run add-shoot -- --audit         # re-check every shoot's photos
-npm run add-shoot -- --rederive      # (re)generate wall derivatives
+```
+Dropbox / Apps / MK8 / Shoots /
+   01 Golden Hour Terrace /
+      shoot.txt              ← optional metadata
+      DSC_0142.jpg           ← the cover
+      terrace wide.jpg
+   02 Harbor Fog /
+      harbor-01.jpg          ← no shoot.txt: first file is the cover
 ```
 
-It asks for the title, category, description, location, year, which photo
-is the cover (the wall thumbnail) and optional camera data, then copies
-the images into `public/shoots/<id>/` and registers the shoot in
-`src/content/shoots.json`. Answers can also be piped in for scripted use.
+- **Add a shoot** — make a folder, drop photos in.
+- **Edit one** — rename, add or remove files.
+- **Delete one** — delete the folder.
+- **Order the wall** — the number prefix (`01`, `02`, …) sorts the shoots
+  and is stripped from the displayed title. A folder named
+  `north-light-portraits` displays as "North Light Portraits".
+- Changes appear on the site within about **five minutes**.
 
-**Quality model.** Originals are never modified — they're copied as-is
-and are always what the per-shoot detail view shows (the zoom opens on
-the cached wall image and silently upgrades to the original once loaded).
-For the gallery wall, the script derives `<name>.wall.jpg` from the cover:
-same aspect (never cropped), EXIF-oriented, high-quality downscale to
-1200px wide — as detailed as any wall frame can display, and no more.
-Covers already ≤1200px are served directly with no derivative. Existing
-shoots can be upgraded any time with `--rederive`.
+File names, types and sizes are unrestricted. Anything a browser can render
+(`.jpg`, `.png`, `.webp`, `.avif`, `.gif`, spaces in names) works; anything
+else is reported by the audit rather than silently ignored.
 
-**Ingest warnings** (informative, never blocking): skipped non-web-safe
-files by name (HEIC/TIFF/RAW/PSD…); decode cost of big photos
-(megapixels → browser RAM); photos too small to stay sharp in the detail
-view or on the wall; landscape covers (wall frames are portrait — the
-warning includes the visible-width %); extreme panoramas (render small in
-the height-fit detail pane); total shoot payload over 25 MB. Thresholds
-live at the top of `scripts/add-shoot.mjs`.
+### shoot.txt (optional)
 
-By hand:
+Plain `Key: value` lines. Every one is optional, unknown keys are ignored,
+`#` starts a comment, and a missing file just means the defaults apply:
 
-1. Drop a folder of images into `public/shoots/<shoot-id>/`.
-2. Add an entry to `src/content/shoots.json` listing the files in
-   display order. **The first photo is the cover** shown on the wall.
-   (Types and URL helpers live in `src/content/shoots.ts`.)
+```
+Category: Editorial
+Location: Los Angeles
+Year: 2026
+Cover: DSC_0142.jpg
+Description: A rooftop editorial shot in the last twenty minutes of light.
+Order: DSC_0142.jpg, terrace wide.jpg
+```
 
-File names, extensions and dimensions are unrestricted — anything the
-browser renders (`.jpg`, `.png`, `.webp`, `.avif`, `.svg`, spaces in names)
-works. Aspect ratios are measured at runtime; nothing needs pre-declaring.
+Keys are matched loosely — `Focal Length`, `focal length` and `focallength`
+are the same key, and `Year: March 2026` parses to 2026.
 
-Notes on the loose-file approach:
-- Covers are displayed `object-cover` inside portrait wall frames, so an
-  extremely wide cover will crop hard on the wall (fine in the detail view,
-  which re-fits per photo). Prefer portrait-ish covers.
-- Detail-view photos are served as-is from `public/` — that's the
-  quality guarantee. For visitors' sake, exporting shoot photos at
-  ~2400 px long edge is visually identical to camera-native files on any
-  realistic screen (the ingest warnings say so when it matters).
-- The bundled images are generated gradient placeholders with the file
-  name baked in (so shoot navigation is visibly working) — replace them
-  folder-by-folder.
+**Camera details are read from each photo's own EXIF**, so nobody types
+them. `shoot.txt` can override any field if the EXIF is wrong or missing.
+
+### How photos reach the browser
+
+| | Wall cover | Detail view |
+|---|---|---|
+| Source | Dropbox's thumbnailer (~1200px) | the untouched original |
+| Served by | `/api/photo/wall/…` (proxied) | `/api/photo/full/…` (redirect) |
+| Cached | immutably, keyed by Dropbox `rev` | 1 hour |
+
+URLs carry the file's Dropbox `rev`, so they are immutable: replace a photo
+and its URL changes, which busts every cache by itself. Originals are
+redirected rather than proxied, which keeps large files off Vercel's 4.5 MB
+response cap and off its bandwidth allowance. If Dropbox refuses to
+thumbnail a cover — it declines anything over 20 MB, which is exactly what
+a straight-from-camera JPEG looks like — the site resizes it instead.
+
+If Dropbox is unreachable, the last good catalogue keeps serving rather
+than the gallery going blank.
+
+### Checking what's in there
+
+```bash
+npm run shoots:audit                              # against `npm run dev`
+AUDIT_TOKEN=… npm run shoots:audit -- <site-url>  # against the deployed site
+```
+
+Reports files that were skipped and why, covers that will crop on the wall,
+photos big enough to slow a phone down, and shoots with no `shoot.txt`. It
+reads `/api/shoots/audit`, so the answers come from the same code that
+builds the gallery. That endpoint needs `SHOOTS_AUDIT_TOKEN` in production
+because it lists file names.
 
 ## Contact form
 
@@ -146,9 +168,13 @@ but an untouched submit sends that value (currently `other`).
 
 ```
 src/
-  content/            site.ts (config) · shoots.ts (catalogue)
-  lib/                contact.ts (shared validation) · contact-emails.ts
-                      · rate-limit.ts
+  content/            site.ts (config) · shoots.ts (types + photo URLs)
+  lib/
+    dropbox/          api.ts (auth + calls) · parse.ts (folder & shoot.txt
+                      conventions) · manifest.ts (catalogue + 5-min cache)
+                      · exif.ts (camera data) · audit.ts (health check)
+    contact.ts        shared form validation · contact-emails.ts
+    rate-limit.ts · photo-path.ts
   components/
     aperture/         the gallery, self-contained
       tunables.ts     every magic number from the spec, one file
@@ -159,8 +185,10 @@ src/
       ShootDetail.tsx zoom to editorial split + arrows/dots shoot nav,
                       late image loading + neighbour prefetch
     site/             Chrome (wordmark + fullscreen menu) · PageShell
-                      · ContactForm
+                      · ContactForm · GalleryEmpty
   app/                routes; globals.css holds the theme tokens
+    api/photo/…       the only path photos take to the browser
+    api/shoots/audit  catalogue health check
 ```
 
 Design decisions of note:
@@ -171,6 +199,10 @@ Design decisions of note:
 - **Shoot photos load late**: only covers load with the wall; opening a
   shoot loads the current photo and prefetches its neighbours as you
   navigate.
+- **`/` and `/work` render per request**, backed by a five-minute shared
+  cache of the Dropbox catalogue — so Dropbox is swept once per window for
+  the whole site rather than once per visitor, and edits appear without a
+  redeploy.
 - **Reduced motion** is respected everywhere: no entrance rise, flat wall
   (no bow), instant zoom, no menu/overlay animation dependencies.
 - The intro word-drum from the original spec was deliberately replaced by
@@ -183,8 +215,9 @@ Design decisions of note:
 - Photos are organized as **shoots** (cover + set) instead of a flat list
   of 14; the editorial split gains arrows/dots navigation and a per-photo
   camera panel.
-- Images are local files with unrestricted names/types instead of the
-  hosted `<id>.avif` set.
+- Photos live in the customer's Dropbox instead of the repo; the catalogue
+  is built from folder conventions plus an optional `shoot.txt`, and camera
+  data comes from EXIF.
 
 Everything else — layout slots, motion constants, bow/balloon math, edge
 blur, zoom geometry, fonts, theme tokens — follows the spec's pinned

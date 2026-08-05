@@ -10,7 +10,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { SHOOTS, wallUrl } from "@/content/shoots";
+import { wallUrl, type Shoot } from "@/content/shoots";
 import { buildSlots, isMobile, type WallLayout } from "./layout";
 import EdgeBlur from "./EdgeBlur";
 import ShootDetail, { type OriginRect } from "./ShootDetail";
@@ -50,7 +50,18 @@ const clamp = (v: number, lo: number, hi: number) =>
 
 type OpenState = { shootIndex: number; origin: OriginRect };
 
-export default function Aperture({ className }: { className?: string }) {
+export default function Aperture({
+  shoots,
+  className,
+}: {
+  /** Built from Dropbox by the page that renders this. */
+  shoots: Shoot[];
+  className?: string;
+}) {
+  // the engine reads this from a ref so the rAF loop never closes over
+  // a stale prop after a revalidation
+  const shootsRef = useRef(shoots);
+  shootsRef.current = shoots;
   const sectionRef = useRef<HTMLElement | null>(null);
   const planeRef = useRef<HTMLDivElement | null>(null);
   const hintRef = useRef<HTMLDivElement | null>(null);
@@ -99,7 +110,7 @@ export default function Aperture({ className }: { className?: string }) {
 
     const measure = () => {
       dimsRef.current = { vw: window.innerWidth, vh: window.innerHeight };
-      const next = buildSlots(window.innerWidth, SHOOTS.length);
+      const next = buildSlots(window.innerWidth, shootsRef.current.length);
       layoutRef.current = next;
       currentZ.current = new Array(next.cells.length).fill(-Infinity);
       lastZIndex.current = new Array(next.cells.length).fill(NaN);
@@ -391,7 +402,7 @@ export default function Aperture({ className }: { className?: string }) {
           style={{ transformStyle: "preserve-3d", transformOrigin: "50% 50%" }}
         >
           {layout?.cells.map((cell, i) => {
-            const shoot = SHOOTS[cell.shootIndex];
+            const shoot = shoots[cell.shootIndex];
             return (
               <div
                 key={cell.index}
@@ -434,9 +445,9 @@ export default function Aperture({ className }: { className?: string }) {
 
       {open && (
         <ShootDetail
-          shoot={SHOOTS[open.shootIndex]}
+          shoot={shoots[open.shootIndex]}
           shootNumber={open.shootIndex + 1}
-          shootCount={SHOOTS.length}
+          shootCount={shoots.length}
           origin={open.origin}
           reduced={reduced}
           onClosed={handleClosed}

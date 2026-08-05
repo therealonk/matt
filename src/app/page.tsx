@@ -7,13 +7,18 @@
 
 import Link from "next/link";
 import { SITE } from "@/content/site";
-import { SHOOTS, wallUrl } from "@/content/shoots";
+import { wallUrl } from "@/content/shoots";
+import { getShoots } from "@/lib/dropbox/manifest";
 import { DESKTOP_SLOTS, IMG_GRADE } from "@/components/aperture/tunables";
 
 // the upper slots of the wall composition — enough to fill the first viewport
 const BACKDROP_SLOT_INDEXES = [0, 1, 4, 5, 9, 10];
 
-export default function LandingPage() {
+/* Same five-minute Dropbox cadence as the gallery. */
+export const dynamic = "force-dynamic";
+
+export default async function LandingPage() {
+  const { shoots } = await getShoots();
   return (
     <main className="relative h-screen overflow-hidden select-none">
       {/* static impression of the wall (no engine, no interactivity) */}
@@ -21,9 +26,9 @@ export default function LandingPage() {
         aria-hidden
         className="absolute inset-0 max-md:origin-top max-md:scale-[1.9]"
       >
-        {BACKDROP_SLOT_INDEXES.map((slotIdx, i) => {
+        {(shoots.length ? BACKDROP_SLOT_INDEXES : []).map((slotIdx, i) => {
           const s = DESKTOP_SLOTS[slotIdx];
-          const shoot = SHOOTS[i % SHOOTS.length];
+          const shoot = shoots[i % shoots.length];
           return (
             // eslint-disable-next-line @next/next/no-img-element
             <img
