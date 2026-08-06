@@ -1,0 +1,199 @@
+===============================================================
+MK8 MEDIA — WEBSITE CONTENT
+Fill in the lines marked >>> and send this file back.
+===============================================================
+
+Anything you leave blank stays as it is now, so it is fine to
+answer what you know and come back to the rest. Write plainly —
+no formatting, no character limits to worry about. Where a length
+is suggested it is only a guide.
+
+Photos are NOT part of this file. Those go straight into the
+Dropbox folder and appear on the site by themselves.
+
+
+---------------------------------------------------------------
+1. CONTACT DETAILS
+---------------------------------------------------------------
+These appear on the Contact page, on the front page, and are
+where inquiry emails are sent.
+
+Business name as it should be displayed on the site
+(currently "MK8 Media")
+>>>
+
+Name of the person to contact
+(currently "Matt")
+>>>
+
+Email address for inquiries
+(currently mk8mediateam@gmail.com)
+>>>
+
+Phone number, exactly as you want it shown
+(currently 646-123-4567 — this is a placeholder)
+>>>
+
+City and state
+(currently New York, NY)
+>>>
+
+Short tagline under the business name on the front page
+(currently "Photography & Marketing" — about 2 to 4 words)
+>>>
+
+
+---------------------------------------------------------------
+2. SERVICES
+---------------------------------------------------------------
+Three services are listed. Each needs a short description —
+roughly one or two sentences, about 20 to 35 words. Say what the
+client gets, not how it works.
+
+Example of the right length and tone:
+  "Editorial, portrait, product and location shoots — planned,
+   shot and delivered as finished, retouched sets."
+
+SERVICE 1 — currently titled "Photography"
+Change the title? (leave blank to keep)
+>>>
+Description
+>>>
+
+
+SERVICE 2 — currently titled "Marketing"
+Change the title? (leave blank to keep)
+>>>
+Description
+>>>
+
+
+SERVICE 3 — currently titled "Video Production"
+Change the title? (leave blank to keep)
+>>>
+Description
+>>>
+
+
+Want a fourth service added? If so, give a title and description,
+otherwise leave blank.
+>>> Title:
+>>> Description:
+
+
+---------------------------------------------------------------
+3. TRUSTED BY
+---------------------------------------------------------------
+A row of client names at the bottom of the Services page.
+Currently showing placeholders: Porsche, Mavis, Michelin, BMW,
+Pep Boys.
+
+List the clients you actually want shown, one per line. Only
+include businesses that would be comfortable being named
+publicly.
+
+>>>
+>>>
+>>>
+>>>
+>>>
+
+Do you have logo files for any of these? (yes / no — if yes,
+put them in a folder called "Logos" next to the Shoots folder
+in Dropbox and we will use them instead of the plain text.)
+>>>
+
+
+---------------------------------------------------------------
+4. ABOUT PAGE
+---------------------------------------------------------------
+Currently one placeholder sentence. This is the page where a
+prospective client decides whether they like you, so it is worth
+spending time on.
+
+Opening line — one sentence on what MK8 Media is
+>>>
+
+The main paragraph — roughly 40 to 80 words. Useful things to
+cover: how long you have been doing this, what kind of work you
+most enjoy, what a client can expect from working with you.
+>>>
+
+
+A second paragraph, if you want one — optional. Often used for
+background, training, or the way you approach a shoot.
+>>>
+
+
+Anything else that belongs on this page? For example awards,
+press mentions, equipment, or a note about travel and availability.
+>>>
+
+
+---------------------------------------------------------------
+5. CONTACT PAGE WORDING
+---------------------------------------------------------------
+The line above the contact form currently reads:
+
+  "For bookings, campaign work or a portfolio walkthrough, reach
+   out — we reply within two business days."
+
+Keep it, or write your own
+>>>
+
+Is "within two business days" accurate? If not, what should it
+say? (This promise also appears in the automatic reply people
+receive, so it should be one you can keep.)
+>>>
+
+The inquiry form asks people to choose a type: Photography,
+Marketing, Video Production, or Other. Change or add any?
+>>>
+
+
+---------------------------------------------------------------
+6. THE SHOOTS
+---------------------------------------------------------------
+For each folder of photos you put in Dropbox, the site can show a
+category, location, year and short description. That information
+goes in a small text file inside the shoot's own folder, named
+exactly:
+
+  shoot.txt
+
+Copy the block below into that file and fill it in. Every line is
+optional — leave out anything you do not want shown.
+
+  Category: Editorial
+  Location: New York, NY
+  Year: 2026
+  Cover: which-photo-should-be-the-thumbnail.jpg
+  Description: One or two sentences about the shoot.
+
+Notes:
+  - "Cover" is the photo that represents the shoot in the gallery.
+    Portrait photos work best. If you leave it out, the first
+    photo alphabetically is used.
+  - Camera details (body, lens, aperture, shutter, ISO) are read
+    automatically from the photos. You never type those.
+  - No shoot.txt at all is fine — the shoot shows with just its
+    title, taken from the folder name.
+
+Any questions about this part, write them here and we will sort
+it out rather than you guessing:
+>>>
+
+
+---------------------------------------------------------------
+7. ANYTHING ELSE
+---------------------------------------------------------------
+Pages, sections or wording you want that are not covered above.
+Also tell us anything on the current site you dislike.
+
+>>>
+
+
+===============================================================
+Send this file back when you are done. Nothing here is
+permanent — all of it can be changed later.
+===============================================================
