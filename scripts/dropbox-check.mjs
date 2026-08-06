@@ -135,8 +135,33 @@ if (!res.ok) {
 
 console.log("  ✓ Token refresh succeeded — key, secret and refresh token all valid.");
 
-/* --- 3. can we actually see the shoots folder? --- */
-const { access_token } = JSON.parse(body);
+/* --- 3. does this grant actually carry the scopes we need? --- */
+const parsed = JSON.parse(body);
+const { access_token } = parsed;
+const REQUIRED = ["files.metadata.read", "files.content.read"];
+const granted = (parsed.scope || "").split(/\s+/).filter(Boolean);
+
+if (granted.length) {
+  const missing = REQUIRED.filter((r) => !granted.includes(r));
+  console.log(`  ${missing.length ? "✗" : "✓"} Scopes on this token: ${granted.join(" ")}`);
+  if (missing.length) {
+    console.error(`
+  ✗ Missing: ${missing.join(", ")}
+
+    Ticking the box in the app console does NOT add the permission to a
+    grant you already made — the token keeps whatever it was issued with.
+    To fix it, in this order:
+
+      1. https://www.dropbox.com/developers/apps → your app → Permissions
+         tick files.metadata.read and files.content.read, click Submit
+      2. https://www.dropbox.com/account/connected_apps
+         find the app and disconnect it (this clears the old grant)
+      3. npm run dropbox:auth
+         it now names the scopes explicitly and verifies what came back
+`);
+    process.exit(1);
+  }
+}
 const shootsPath = (raw("DROPBOX_SHOOTS_PATH") || "/Shoots").trim();
 
 const list = await fetch(`${API}/2/files/list_folder`, {
@@ -156,10 +181,14 @@ if (!list.ok) {
     Apps / <your app name> / and create a folder called "Shoots".
 `);
   else if (listBody.includes("missing_scope"))
-    console.error(`  The app is missing a permission. On its Permissions tab enable
-  files.metadata.read and files.content.read, click Submit, then run
-  npm run dropbox:auth again — scopes added after a token is issued do
-  not apply to it.
+    console.error(`  The TOKEN lacks a permission the app has. Enabling a scope in the
+  console does not add it to a grant a user already made — you must
+  disconnect and re-authorize:
+
+    1. https://www.dropbox.com/developers/apps → your app → Permissions
+       tick files.metadata.read and files.content.read, click Submit
+    2. https://www.dropbox.com/account/connected_apps → disconnect the app
+    3. npm run dropbox:auth
 `);
   process.exit(1);
 }

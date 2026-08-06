@@ -34,17 +34,32 @@ if (!key || !secret) {
   process.exit(1);
 }
 
+/*
+ * Scopes are requested EXPLICITLY. Dropbox does not add newly-enabled
+ * permissions to a grant a user already gave, and re-authorizing an
+ * already-connected app can silently reuse that old grant — which shows up
+ * later as "missing_scope" even though the boxes are ticked in the console.
+ * Naming them here forces the consent to cover exactly what we need.
+ */
+const SCOPES = ["files.metadata.read", "files.content.read"];
+
 const authUrl =
   "https://www.dropbox.com/oauth2/authorize" +
   `?client_id=${encodeURIComponent(key)}` +
-  "&token_access_type=offline&response_type=code";
+  "&token_access_type=offline&response_type=code" +
+  `&scope=${encodeURIComponent(SCOPES.join(" "))}`;
 
 console.log(`
-  1. Open this URL and click "Allow":
+  1. If this app has been authorized before, disconnect it first:
+     https://www.dropbox.com/account/connected_apps
+     (A grant made earlier does NOT gain permissions you enabled later,
+      and re-authorizing can quietly reuse it.)
+
+  2. Open this URL and click "Allow":
 
      ${authUrl}
 
-  2. Dropbox shows an authorization code. Copy it and paste it below.
+  3. Dropbox shows an authorization code. Copy it and paste it below.
      (It is single-use and expires within a few minutes.)
 `);
 
@@ -89,6 +104,9 @@ const block = [
   `DROPBOX_REFRESH_TOKEN=${data.refresh_token}`,
 ].join("\n");
 
+const granted = (data.scope || "").split(/\s+/).filter(Boolean);
+const missing = SCOPES.filter((s) => !granted.includes(s));
+
 console.log(`
   ✓ Success. These three values are what the site needs:
 
@@ -96,9 +114,21 @@ ${block
   .split("\n")
   .map((l) => "     " + l)
   .join("\n")}
-
-  Scopes granted: ${data.scope || "(none reported)"}
 `);
+
+if (missing.length) {
+  console.error(`  ✗ But the grant is missing: ${missing.join(", ")}
+    Granted instead: ${granted.join(" ") || "(none)"}
+
+    The gallery will fail with "missing_scope" using this token. Fix it:
+      1. https://www.dropbox.com/developers/apps → your app → Permissions
+         tick files.metadata.read and files.content.read, click Submit
+      2. https://www.dropbox.com/account/connected_apps → disconnect the app
+      3. run this again
+`);
+  process.exit(1);
+}
+console.log(`  Scopes granted: ${granted.join(" ")}\n`);
 
 // offer to write them locally so `npm run dev` just works
 const existing = fs.existsSync(ENV_FILE) ? fs.readFileSync(ENV_FILE, "utf8") : "";
