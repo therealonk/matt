@@ -224,17 +224,47 @@ export default function Aperture({
           (half - (cell.baseY + posY.current)) / lay.tileH
         );
         const flatTopY = cell.baseY + kY * lay.tileH + posY.current;
-        if (flatTopY + cell.height < -CULL_Y || flatTopY > vh + CULL_Y) {
+        const flatCenterY = flatTopY + cell.height / 2;
+        /*
+         * n is the distance from the focal line, normalised so the screen
+         * edge is ±1 — and the projection is calibrated for exactly that
+         * range (MAX_ANGLE is "the tilt of a screen-EDGE frame"). Frames
+         * drawn beyond the edge reach |n| > 2, and because the depth goes
+         * as n² that extrapolates zS far past Z_DEPTH: a frame just above
+         * the viewport would be thrown to z≈367, blown up ~1.4× by
+         * perspective, and lurch as it came back into view. Clamping keeps
+         * every frame inside the envelope the bow was designed for.
+         */
+        const n = clamp((flatCenterY - half) / half, -1, 1);
+        const theta = n * curlMag * MAX_ANGLE;
+        // the pull-in still uses the true distance, so frames off-screen
+        // keep travelling with the wall rather than bunching at the edge
+        const adjCY = half + (flatCenterY - half) * Math.cos(Math.abs(theta));
+        const zS = -dirSign * Z_DEPTH * curlMag * n * n;
+        const rotX = ROT_SIGN * dirSign * theta * DEG;
+
+        /*
+         * Cull on where the frame is actually DRAWN, not where the flat
+         * grid would put it. Three things move it away from that position:
+         * the bow pulls frames toward the focal line, the balloon scales
+         * the whole plane about the viewport centre, and positive z grows
+         * the frame under perspective. Testing the flat rect hid frames
+         * that were still partly on screen — the tall bleeding ones drift
+         * furthest, so they blinked at the top edge.
+         */
+        const grow = PERSPECTIVE_PX / (PERSPECTIVE_PX - Math.max(0, zS));
+        const drawnCentre = adjCY + yRise;
+        const screenCentre = half + (drawnCentre - half) * planeScale;
+        const screenHalfH = (cell.height * grow * planeScale) / 2;
+        if (
+          screenCentre + screenHalfH < -CULL_Y ||
+          screenCentre - screenHalfH > vh + CULL_Y
+        ) {
           if (el.style.opacity !== "0") el.style.opacity = "0";
           currentZ.current[i] = -Infinity;
           continue;
         }
-        const flatCenterY = flatTopY + cell.height / 2;
-        const n = (flatCenterY - half) / half;
-        const theta = n * curlMag * MAX_ANGLE;
-        const adjCY = half + (flatCenterY - half) * Math.cos(Math.abs(theta));
-        const zS = -dirSign * Z_DEPTH * curlMag * n * n;
-        const rotX = ROT_SIGN * dirSign * theta * DEG;
+
         el.style.transform = `translate3d(${cell.x}px, ${
           adjCY - cell.height / 2 + yRise
         }px, ${zS}px) rotateX(${rotX}deg)`;
