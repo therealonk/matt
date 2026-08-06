@@ -84,9 +84,6 @@ export default function Aperture({
   const curl = useRef({ cur: 0, target: 0 });
   const appear = useRef(0);
   const bandH = useRef(0);
-  const bandHWritten = useRef(0);
-  const entranceBlurActive = useRef(true);
-  const lastZIndex = useRef<number[]>([]);
   const currentZ = useRef<number[]>([]);
   const drag = useRef({
     active: false,
@@ -113,7 +110,6 @@ export default function Aperture({
       const next = buildSlots(window.innerWidth, shootsRef.current.length);
       layoutRef.current = next;
       currentZ.current = new Array(next.cells.length).fill(-Infinity);
-      lastZIndex.current = new Array(next.cells.length).fill(NaN);
       setLayout(next);
     };
     measure();
@@ -224,66 +220,27 @@ export default function Aperture({
           (half - (cell.baseY + posY.current)) / lay.tileH
         );
         const flatTopY = cell.baseY + kY * lay.tileH + posY.current;
-        const flatCenterY = flatTopY + cell.height / 2;
-        /*
-         * n is the distance from the focal line, normalised so the screen
-         * edge is ±1 — and the projection is calibrated for exactly that
-         * range (MAX_ANGLE is "the tilt of a screen-EDGE frame"). Frames
-         * drawn beyond the edge reach |n| > 2, and because the depth goes
-         * as n² that extrapolates zS far past Z_DEPTH: a frame just above
-         * the viewport would be thrown to z≈367, blown up ~1.4× by
-         * perspective, and lurch as it came back into view. Clamping keeps
-         * every frame inside the envelope the bow was designed for.
-         */
-        const n = clamp((flatCenterY - half) / half, -1, 1);
-        const theta = n * curlMag * MAX_ANGLE;
-        // the pull-in still uses the true distance, so frames off-screen
-        // keep travelling with the wall rather than bunching at the edge
-        const adjCY = half + (flatCenterY - half) * Math.cos(Math.abs(theta));
-        const zS = -dirSign * Z_DEPTH * curlMag * n * n;
-        const rotX = ROT_SIGN * dirSign * theta * DEG;
-
-        /*
-         * Cull on where the frame is actually DRAWN, not where the flat
-         * grid would put it. Three things move it away from that position:
-         * the bow pulls frames toward the focal line, the balloon scales
-         * the whole plane about the viewport centre, and positive z grows
-         * the frame under perspective. Testing the flat rect hid frames
-         * that were still partly on screen — the tall bleeding ones drift
-         * furthest, so they blinked at the top edge.
-         */
-        const grow = PERSPECTIVE_PX / (PERSPECTIVE_PX - Math.max(0, zS));
-        const drawnCentre = adjCY + yRise;
-        const screenCentre = half + (drawnCentre - half) * planeScale;
-        const screenHalfH = (cell.height * grow * planeScale) / 2;
-        if (
-          screenCentre + screenHalfH < -CULL_Y ||
-          screenCentre - screenHalfH > vh + CULL_Y
-        ) {
+        // cull on the flat rect with margin (§5.4)
+        if (flatTopY + cell.height < -CULL_Y || flatTopY > vh + CULL_Y) {
           if (el.style.opacity !== "0") el.style.opacity = "0";
           currentZ.current[i] = -Infinity;
           continue;
         }
-
+        const flatCenterY = flatTopY + cell.height / 2;
+        const n = (flatCenterY - half) / half;
+        const theta = n * curlMag * MAX_ANGLE;
+        const adjCY = half + (flatCenterY - half) * Math.cos(Math.abs(theta));
+        const zS = -dirSign * Z_DEPTH * curlMag * n * n;
+        const rotX = ROT_SIGN * dirSign * theta * DEG;
         el.style.transform = `translate3d(${cell.x}px, ${
           adjCY - cell.height / 2 + yRise
         }px, ${zS}px) rotateX(${rotX}deg)`;
-        const zi = Math.round(2000 + zS);
-        if (lastZIndex.current[i] !== zi) {
-          el.style.zIndex = String(zi);
-          lastZIndex.current[i] = zi;
-        }
-        if (el.style.opacity !== "1") el.style.opacity = "1";
-        if (entranceBlur > 0.05) {
-          el.style.filter = `blur(${entranceBlur.toFixed(2)}px)`;
-        } else if (entranceBlurActive.current) {
-          el.style.filter = "";
-        }
+        el.style.zIndex = String(Math.round(2000 + zS));
+        el.style.opacity = "1";
+        el.style.filter =
+          entranceBlur > 0.05 ? `blur(${entranceBlur.toFixed(2)}px)` : "";
         currentZ.current[i] = zS;
       }
-      // once the entrance blur has been cleared from every cell, stop
-      // touching filters entirely
-      if (entranceBlur <= 0.05) entranceBlurActive.current = false;
 
       // edge-blur bands breathe with |vel| (§4.5)
       const base = Math.min(76, Math.max(38, 0.068 * vh));
@@ -294,13 +251,8 @@ export default function Aperture({
             Math.min(1, Math.abs(vel.current) / EDGE_BLUR_VEL_REF));
       if (bandH.current === 0) bandH.current = base;
       bandH.current += (targetH - bandH.current) * EDGE_BLUR_EASE;
-      // skip the DOM write while settled — a height write relayouts every
-      // slab, and at rest the value isn't meaningfully changing
-      if (Math.abs(bandH.current - bandHWritten.current) >= 0.5) {
-        bandHWritten.current = bandH.current;
-        for (const b of bandsRef.current)
-          if (b) b.style.height = `${bandH.current.toFixed(1)}px`;
-      }
+      for (const b of bandsRef.current)
+        if (b) b.style.height = `${bandH.current.toFixed(1)}px`;
     };
     raf = requestAnimationFrame(tick);
 
