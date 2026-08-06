@@ -4,7 +4,7 @@
  * Aperture — the editorial photo wall (aperture.md §§2–5, 7).
  * A single rAF loop owns the wall: ambient auto-scroll, user momentum with
  * the spin velocity-counter, the gentle lens-bow + balloon, looping wrap,
- * culling and the edge-blur band heights. GSAP owns only the entrance rise
+ * culling and the edge-fade band heights. GSAP owns only the entrance rise
  * and (inside ShootDetail) the open/close zoom geometry.
  */
 
@@ -12,7 +12,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { wallUrl, type Shoot } from "@/content/shoots";
 import { buildSlots, isMobile, type WallLayout } from "./layout";
-import EdgeBlur from "./EdgeBlur";
+import EdgeFade from "./EdgeFade";
 import ShootDetail, { type OriginRect } from "./ShootDetail";
 import {
   AUTO_SCROLL,
@@ -25,9 +25,12 @@ import {
   CURL_MOBILE,
   DEG,
   DRAG_NORM,
-  EDGE_BLUR_EASE,
-  EDGE_BLUR_GROWTH,
-  EDGE_BLUR_VEL_REF,
+  EDGE_FADE_EASE,
+  EDGE_FADE_GROWTH,
+  EDGE_FADE_MAX_PX,
+  EDGE_FADE_MIN_PX,
+  EDGE_FADE_VEL_REF,
+  EDGE_FADE_VH,
   IMG_GRADE,
   MAX_ANGLE,
   PERSPECTIVE_PX,
@@ -242,15 +245,18 @@ export default function Aperture({
         currentZ.current[i] = zS;
       }
 
-      // edge-blur bands breathe with |vel| (§4.5)
-      const base = Math.min(76, Math.max(38, 0.068 * vh));
+      // edge fade breathes with |vel| (§4.5)
+      const base = Math.min(
+        EDGE_FADE_MAX_PX,
+        Math.max(EDGE_FADE_MIN_PX, EDGE_FADE_VH * vh)
+      );
       const targetH =
         base *
         (1 +
-          EDGE_BLUR_GROWTH *
-            Math.min(1, Math.abs(vel.current) / EDGE_BLUR_VEL_REF));
+          EDGE_FADE_GROWTH *
+            Math.min(1, Math.abs(vel.current) / EDGE_FADE_VEL_REF));
       if (bandH.current === 0) bandH.current = base;
-      bandH.current += (targetH - bandH.current) * EDGE_BLUR_EASE;
+      bandH.current += (targetH - bandH.current) * EDGE_FADE_EASE;
       for (const b of bandsRef.current)
         if (b) b.style.height = `${bandH.current.toFixed(1)}px`;
     };
@@ -416,7 +422,7 @@ export default function Aperture({
         </div>
       </div>
 
-      <EdgeBlur ref={bandsRef} />
+      <EdgeFade ref={bandsRef} />
 
       {/* hint sits top-centre, clear of the corner chrome */}
       <div className="pointer-events-none absolute inset-x-0 top-[clamp(16px,3vh,28px)] z-40 flex justify-center">

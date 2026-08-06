@@ -42,12 +42,33 @@ export const BALLOON_UP = 0.12; // scroll-down: wall scales UP from centre
 export const BALLOON_DOWN = 0.12; // scroll-up: wall scales DOWN slightly
 export const DEG = 180 / Math.PI;
 
-// §4.5 — progressive edge blur
-export const EDGE_BLUR_LAYERS = 8;
-export const EDGE_BLUR_MAX = 10; // px at the very edge
-export const EDGE_BLUR_GROWTH = 0.3; // bands grow up to +30%
-export const EDGE_BLUR_VEL_REF = 150; // px/frame at which growth maxes
-export const EDGE_BLUR_EASE = 0.08;
+/*
+ * §4.5 — the edge treatment.
+ *
+ * The spec called for stacked backdrop-filter slabs. Profiling put ~95% of
+ * the wall's frame time in re-blurring the moving wall behind them, so the
+ * melt is now painted instead: a gradient to the theme background, which
+ * costs nothing per frame. Frames stay sharp and dissolve into the ground
+ * rather than softening into it.
+ */
+
+/** Resting reach of the fade: EDGE_FADE_VH of the viewport, within bounds. */
+export const EDGE_FADE_MIN_PX = 64;
+export const EDGE_FADE_VH = 0.18;
+export const EDGE_FADE_MAX_PX = 160;
+
+/**
+ * Falloff exponent. Opacity is (1 − t)^EDGE_FADE_CURVE across the band,
+ * so it leaves the edge solid and tapers to nothing — a plain linear ramp
+ * leaves a faint visible line where it stops.
+ */
+export const EDGE_FADE_CURVE = 2.2;
+/** Stops used to approximate that curve; more is smoother, 10 is plenty. */
+export const EDGE_FADE_STOPS = 10;
+
+export const EDGE_FADE_GROWTH = 0.3; // bands grow up to +30%
+export const EDGE_FADE_VEL_REF = 150; // px/frame at which growth maxes
+export const EDGE_FADE_EASE = 0.08;
 
 // §5 — motion
 export const AUTO_SCROLL = 0.35; // px/frame — ambient upward drift (~21 px/s)

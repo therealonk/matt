@@ -198,7 +198,7 @@ src/
       layout.ts       buildSlots — desktop slots + mobile masonry
       Aperture.tsx    the wall: single rAF engine (scroll, spin, curl,
                       balloon, wrap/cull, entrance rise)
-      EdgeBlur.tsx    stacked masked backdrop-filter bands (top/bottom)
+      EdgeFade.tsx    top/bottom gradient fade into the theme background
       ShootDetail.tsx zoom to editorial split + arrows/dots shoot nav,
                       late image loading + neighbour prefetch
     site/             Chrome (wordmark + fullscreen menu) · PageShell
@@ -235,7 +235,15 @@ Design decisions of note:
 - Photos live in the customer's Dropbox instead of the repo; the catalogue
   is built from folder conventions plus an optional `shoot.txt`, and camera
   data comes from EXIF.
+- The edges fade rather than blur. The spec's stacked `backdrop-filter`
+  slabs measured as ~95% of the wall's frame time — a backdrop-filter
+  re-blurs the moving wall behind it every frame. A gradient to the theme
+  background is composited once and costs nothing, taking the wall from
+  16 fps to the display's ceiling on a software rasteriser. Frames now stay
+  sharp and dissolve into the ground rather than softening into it. The
+  reach is larger to suit the different effect (160px against the spec's
+  ~61px). Dials live in `tunables.ts` as `EDGE_FADE_*`.
 
 Everything else — layout slots, motion constants, bow/balloon math, edge
-blur, zoom geometry, fonts, theme tokens — follows the spec's pinned
+zoom geometry, fonts, theme tokens — follows the spec's pinned
 values (`tunables.ts`).
