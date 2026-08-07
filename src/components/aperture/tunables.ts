@@ -73,6 +73,19 @@ export const EDGE_FADE_EASE = 0.08;
 // §5 — motion
 export const AUTO_SCROLL = 0.35; // px/frame — ambient upward drift (~21 px/s)
 export const WHEEL_GAIN = 0.2;
+
+/*
+ * Wheel events do not agree on units across browsers, and the spec's
+ * WHEEL_GAIN is tuned for pixels. Firefox on Windows and Linux reports a
+ * mouse-wheel notch as 3 LINES rather than ~100 pixels, so reading deltaY
+ * raw made the wall 345x less responsive there — measured, the same ten
+ * notches moved it 5px instead of 1726px. Some configurations report pages.
+ *
+ * These convert a notch into roughly what Chrome would have sent, so the
+ * feel matches. On any browser already reporting pixels this is a no-op.
+ */
+export const WHEEL_LINE_PX = 40; // a 3-line Firefox notch ≈ 120px
+export const WHEEL_PAGE_FRAC = 1; // one "page" = one viewport height
 export const VEL_MAX = 48;
 export const VEL_FRICTION = 0.9;
 export const DRAG_NORM = 16;

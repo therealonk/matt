@@ -45,11 +45,24 @@ import {
   VEL_FRICTION,
   VEL_MAX,
   WHEEL_GAIN,
+  WHEEL_LINE_PX,
+  WHEEL_PAGE_FRAC,
   Z_DEPTH,
 } from "./tunables";
 
 const clamp = (v: number, lo: number, hi: number) =>
   Math.min(hi, Math.max(lo, v));
+
+/**
+ * A wheel notch in pixels, whatever units the browser chose to report.
+ * Firefox on Windows/Linux sends lines; a few configurations send pages.
+ * Browsers already reporting pixels pass straight through.
+ */
+const wheelPixels = (e: WheelEvent, vh: number) => {
+  if (e.deltaMode === 1) return e.deltaY * WHEEL_LINE_PX;
+  if (e.deltaMode === 2) return e.deltaY * vh * WHEEL_PAGE_FRAC;
+  return e.deltaY;
+};
 
 type OpenState = { shootIndex: number; origin: OriginRect };
 
@@ -266,14 +279,15 @@ export default function Aperture({
     const onWheel = (e: WheelEvent) => {
       if (openRef.current) return;
       e.preventDefault();
+      // normalise units first — both the counter and the push depend on it
+      const dy = wheelPixels(e, dimsRef.current.vh || window.innerHeight);
       spin.current = Math.min(
         SPIN_MAX,
-        spin.current + Math.min(1, Math.abs(e.deltaY) / 100) * SPIN_PER_WHEEL
+        spin.current + Math.min(1, Math.abs(dy) / 100) * SPIN_PER_WHEEL
       );
       const ceil = VEL_MAX * (1 + spin.current * SPIN_VEL_BOOST);
       vel.current = clamp(
-        vel.current +
-          e.deltaY * WHEEL_GAIN * (1 + spin.current * SPIN_GAIN_BOOST),
+        vel.current + dy * WHEEL_GAIN * (1 + spin.current * SPIN_GAIN_BOOST),
         -ceil,
         ceil
       );
